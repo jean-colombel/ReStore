@@ -1,14 +1,36 @@
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Data
 {
-  public static class DbInitializer
-  {
-    public static void Initialize(StoreContext context)
+    public static class DbInitializer
     {
-      if (context.Products.Any()) return;
+        public static async Task Initialize(StoreContext context, UserManager<User> userManager)
+        {
+            if (!userManager.Users.Any())
+            {
+                var user = new User
+                {
+                    UserName = "bob",
+                    Email = "bob@test.com"
+                };
 
-      var products = new List<Product>
+                await userManager.CreateAsync(user, "Pa$$w0rd");
+                await userManager.AddToRoleAsync(user, "Member");
+
+                var admin = new User
+                {
+                    UserName = "admin",
+                    Email = "admin@test.com"
+                };
+
+                await userManager.CreateAsync(admin, "Pa$$w0rd");
+                await userManager.AddToRolesAsync(admin, new[] {"Member", "Admin"});
+            }
+
+            if (context.Products.Any()) return;
+
+            var products = new List<Product>
             {
                 new Product
                 {
@@ -208,14 +230,14 @@ namespace API.Data
                 },
             };
 
-      //context.Products.AddRange(products);
-      foreach (var product in products)
-      {
-        context.Products.Add(product);
-      }
+            //context.Products.AddRange(products);
+            foreach (var product in products)
+            {
+                context.Products.Add(product);
+            }
 
 
-      context.SaveChanges();
+            context.SaveChanges();
+        }
     }
-  }
 }
